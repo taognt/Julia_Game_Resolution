@@ -4,21 +4,22 @@ Commandes à taper dans Julia :
 using Pkg
 using CPLEX
 
-aller dans le bon path :cd("path")
+Pour utiliser ce programme, se placer dans le répertoire ./src
 
-dans data :
+Les utilisations possibles sont les suivantes :
 
-include("instanceTest.txt")
+I - Génération d'un jeu de données
+julia
+include("generation.jl")
+generateDataSet()
 
-dans src  :
-
+II - Résolution du jeu de données
+julia
 include("resolution.jl")
+solveDataSet()
+
+III - Présentation des résultats sous la forme d'un tableau
+julia
 include("io.jl")
-cplexSolve(readInputFile("../data/instanceTest.txt"))
-displaySolution(cplexSolve(readInputFile("../data/instanceTest.txt"))[2])
-
-La matrice qui s'affiche représente par des 1 les cases à griser
-
-Pour résoudre une instance aléatoire : 
-
+resultsArray("../res/array.tex")
 
