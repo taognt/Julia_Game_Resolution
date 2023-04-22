@@ -29,13 +29,8 @@ function generateInstance(n::Int64)
             for l in 1:n 
                 for c in 1:n
                     v = rand(1:n)
-
-                    # True if a value has already been assigned to the cell (l, c)
-                    isDark = t[l, c] == 0
-
                     # Number of value that we already tried to assign to cell (l, c)
                     attemptCount = 0
-                    
                     # True if a value has already been assigned to the cell (l, c)
                     isCellFree = t[l, c] == 0
 
@@ -64,7 +59,6 @@ function generateInstance(n::Int64)
                             end
 
                             testedCells += 1
-                            isDark = t[l, c] == 0
                             attemptCount = 0
                             
                             # If the cell has not already been assigned a value and all the value have not all been tested
@@ -99,7 +93,7 @@ Remark: a grid is generated only if the corresponding output file does not alrea
 function generateDataSet()
 
     # for each size considered
-    for size in [3,4,5,6]
+    for size in [2,3,4,5,6]
         for instance in 1:5
             fileName = "../data/instance_t"*string(size)*"_"*string(instance)*".txt"
             

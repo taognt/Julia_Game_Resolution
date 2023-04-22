@@ -1,2 +1,7 @@
-solveTime = 0.011999845504760742
-isOptimal = false
+t = [
+[ 1 0 1 ];
+[ 0 0 0 ];
+[ 1 0 0 ]
+]
+solveTime = 0.009000062942504883
+isOptimal = true

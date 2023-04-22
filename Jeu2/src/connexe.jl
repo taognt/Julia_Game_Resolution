@@ -40,6 +40,19 @@ function est_connexe(t::Matrix{Float64}) #on doit prendre en entrée la matrice
     return all(visited[t .== 0]) # renvoie true si toutes les cases visibles sont visitées
 end
 
+function est_connexe(t::Matrix{Int64}) #on doit prendre en entrée la matrice 
+    #Taille de la grille
+    n = size(t,1)
+    
+    # Vérifier la connexité
+    start_node = findfirst(t .== 0) # prendre le premier nœud blanc trouvé
+    #visited = falses(n*n)
+    visited=bfs(t, start_node[1], start_node[2])
+
+    #println(convert(Matrix{Int}, visited))
+    return all(visited[t .== 0]) # renvoie true si toutes les cases visibles sont visitées
+end
+
 #ce programme permet de renvoyer un ensemble de 0 connexe. Si le tableau de booléens renvoyé ne comprends pas des 1 sur tous les emplacements où il y a des 
 # cases visibles, alors c'est que l'ensemble formé n'est pas connexe
 

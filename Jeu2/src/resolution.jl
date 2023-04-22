@@ -3,7 +3,8 @@ using CPLEX
 using JuMP
 using Base
 
-#include("generation.jl")
+include("io.jl")
+include("generation.jl")
 include("connexe.jl")
 
 TOL = 0.00000001
@@ -191,13 +192,14 @@ function heuristicSolve(t::Matrix{Int64})
         i = i+1
         # Nombre de contrainte max trouvé
         max_contrainte = 0
+        # Liste_Contrainte est la liste des cellules les plus contraintes non grisées, on choisi au hasard d'en griser une parmis celles-ci
+        Liste_Contraintes = []
 
         for i in 1:n #pour chaque ligne
             for j in 1:n #Pour chaque colonne
                 cell = (i,j)
                 # Si [i,j] n'est pas deja grisée
                 if !isIn((i,j), PileCells)
-                    # println("--------------")
                     if (!isIn(cell, ListeNoire)) && (!isIn((i+1, j), PileCells)) && (!isIn((i-1, j), PileCells)) && (!isIn((i, j+1), PileCells)) && (!isIn((i, j-1), PileCells))
                         isGrisable = true
                     else 
@@ -224,10 +226,17 @@ function heuristicSolve(t::Matrix{Int64})
                             nb_contrainte = nb_contrainte + 1
                         end
                     end
-                    # println("for ", chiffre, " in ",i,", ",j," | "," nb contrainte : ", nb_contrainte)
-                    # println((i,j), " is grisable : ", isGrisable)
-
-                    # println("max conT : ", max_contrainte)
+                    if nb_contrainte == max_contrainte 
+                        if (!isIn(cell, ListeNoire)) && (!isIn((i+1, j), PileCells)) && (!isIn((i-1, j), PileCells)) && (!isIn((i, j+1), PileCells)) && (!isIn((i, j-1), PileCells))
+                            isGrisable = true
+                        else 
+                            isGrisable = false 
+                        end 
+                        if isGrisable
+                            push!(Liste_Contraintes, cell)
+                            mcCell = rand(Liste_Contraintes)
+                        end
+                    end
                     if nb_contrainte > max_contrainte
                         max_contrainte = nb_contrainte
                         if (!isIn(cell, ListeNoire)) && (!isIn((i+1, j), PileCells)) && (!isIn((i-1, j), PileCells)) && (!isIn((i, j+1), PileCells)) && (!isIn((i, j-1), PileCells))
@@ -235,25 +244,27 @@ function heuristicSolve(t::Matrix{Int64})
                         else 
                             isGrisable = false 
                         end 
-
+                        # println(cell, " is grisable : ", isGrisable)
+                        # println(max_contrainte)
+                        # println(PileCells)
                         if isGrisable
+                            mcCell = cell
+                            push!(Liste_Contraintes, cell)
                             OneIsGrisable = true
-                            mcCell = (i,j)
-                            # println("[",mcCell[1],", ", mcCell[2],"]")
-                            # println("max contrainte : ", max_contrainte)
+                            # mcCell = rand(Liste_Contraintes)
                         end
                     end
                 end #end cell if cell pas deja grisée
-                
 
             end # end for j
         end # end for i
 
         if OneIsGrisable
             # Maintenant, mcCell contient les coordonnées de la cellule la plus contrainte qui n'est pas deja grisee (modulo des égalités)
-            #println("[",mcCell[1],", ", mcCell[2],"]")
             push!(PileCells, mcCell)
-            #println("Pile : ", PileCells)
+            if !isempty(ListeNoire)
+                pop!(ListeNoire)
+            end
             OneIsGrisable = false
         
         #else : aucune case n'est grisable | On verifie que le jeu est faisable (aucune contrainte)
@@ -268,21 +279,15 @@ function heuristicSolve(t::Matrix{Int64})
                 
             end
         end
-
-        # println("Pile : ",PileCells)
-        # println("Liste noire : ", ListeNoire)
-        # println("max contrainte bouce ",i," : ",max_contrainte)
-        #Aucune contrainte, le jeu est résolu
-        if max_contrainte == 0
+        tCopy = BuildSolution(t, PileCells)
+        if max_contrainte == 0 && est_connexe(tCopy)
             isSolved = true
             println("----------------")
             println("Solution trouvée")
             DisplaySolution(t,PileCells)
         end
 
-        if i>10*n
-            # println("----------------")
-            # println("Pas de solution trouvée")
+        if i>10
             gridStillFeasible = false
         end
 
@@ -293,6 +298,7 @@ function heuristicSolve(t::Matrix{Int64})
     return isSolved, Sol, time() - start
 end 
 
+# NE MARCHE PAS ??
 # function isGrisable(cell::Vector{Int64},PileCells::Vector{Any}, ListeNoire::Vector{Any})
 #     #PileCells est la pile des cellules grisées, à dépiler si le jeu n'est pas résolvable
 #     #coordonnées de la cellule dont on veut savoir si elle est grisable
@@ -379,7 +385,7 @@ function solveDataSet()
 
     # Array which contains the name of the resolution methods
     #resolutionMethod = ["cplex"]
-    resolutionMethod = ["heuristique"]
+    resolutionMethod = ["cplex","heuristique"]
 
     # Array which contains the result folder of each resolution method
     resolutionFolder = resFolder .* resolutionMethod
@@ -429,20 +435,17 @@ function solveDataSet()
                     
                     # Start a chronometer 
                     startingTime = time()
-                    # Solve it and get the results
-                    isOptimal,x, resolutionTime = heuristicSolve(t)
-                    resolutionTime = time() - startingTime
 
-                    # While the grid is not solved and less than 100 seconds are elapsed
-                    # while !isOptimal && resolutionTime < 10
+                    #While the grid is not solved and less than 10 seconds are elapsed
+                    while !isOptimal && resolutionTime < 10
                         
-                    #     # Solve it and get the results
-                    #     isOptimal,x, resolutionTime = heuristicSolve(t)
+                        # Solve it and get the results
+                        isOptimal,x, resolutionTime = heuristicSolve(t)
 
-                    #     # Stop the chronometer
-                    #     resolutionTime = time() - startingTime
+                        # Stop the chronometer
+                        resolutionTime = time() - startingTime
                         
-                    # end
+                    end
 
                     # Write the solution (if any)
                     if isOptimal
